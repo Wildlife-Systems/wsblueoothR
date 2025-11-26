@@ -70,16 +70,12 @@ DataFrame process_bluetooth_data(std::string input_file, int progress_interval =
     if (underscore_pos != std::string::npos) {
       devices.push_back(key.substr(0, underscore_pos));
       datetimes.push_back(key.substr(underscore_pos + 1));
-    } else {
-      devices.push_back(key);
-      datetimes.push_back("");
+      counts.push_back(pair.second);
     }
-    
-    counts.push_back(pair.second);
   }
   
   // Sort by device then datetime
-  std::vector<size_t> indices(total_count);
+  std::vector<size_t> indices(devices.size());
   for (size_t i = 0; i < indices.size(); i++) {
     indices[i] = i;
   }
@@ -92,9 +88,9 @@ DataFrame process_bluetooth_data(std::string input_file, int progress_interval =
   });
   
   // Reorder vectors
-  std::vector<std::string> sorted_devices(total_count);
-  std::vector<std::string> sorted_datetimes(total_count);
-  std::vector<int> sorted_counts(total_count);
+  std::vector<std::string> sorted_devices(devices.size());
+  std::vector<std::string> sorted_datetimes(devices.size());
+  std::vector<int> sorted_counts(devices.size());
   
   for (size_t i = 0; i < indices.size(); i++) {
     sorted_devices[i] = devices[indices[i]];

@@ -37,9 +37,11 @@ process_bluetooth <- function(input_file = "data/combined_sort.txt",
   cat("Processing Bluetooth data with Rcpp...\n")
   result <- process_bluetooth_data(input_file, as.integer(progress_interval))
   
-  # Result is already a data.frame from Rcpp
-  # Convert datetime to POSIXct
-  result$datetime <- as.POSIXct(result$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  # Convert datetime strings to POSIXct
+  result$datetime <- as.POSIXct(result$datetime, format = "%Y%m%d-%H%M%S", tz = "UTC")
+  
+  # No datetime NA
+  final_counts <- final_counts[!is.na(final_counts$datetime),]
   
   cat("Processing complete:", nrow(result), "unique device-datetime combinations\n")
   
