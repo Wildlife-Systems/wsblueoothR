@@ -6,7 +6,9 @@
 \usage{
 process_bluetooth(
   input_file = "data/combined_sort.txt",
-  progress_interval = 1000
+  progress_interval = 1000,
+  include_prefixes = NULL,
+  exclude_prefixes = NULL
 )
 }
 \arguments{
@@ -15,6 +17,12 @@ device datetime address power name}
 
 \item{progress_interval}{Integer. Report progress every N lines (0 = no progress).
 Default is 1000.}
+
+\item{include_prefixes}{Character vector or NULL. If provided, only include records
+where the name field starts with one of these prefixes. Default is NULL (no filtering).}
+
+\item{exclude_prefixes}{Character vector or NULL. If provided, exclude records
+where the name field starts with one of these prefixes. Default is NULL (no filtering).}
 }
 \value{
 A data.frame with columns:
@@ -26,7 +34,7 @@ A data.frame with columns:
 }
 \description{
 High-performance processing of Bluetooth RSSI data files using C++ implementation.
-Counts unique device-datetime combinations from input data.
+Counts unique device-datetime combinations from input data with optional name filtering.
 }
 \examples{
 \dontrun{
@@ -35,6 +43,14 @@ data <- process_bluetooth("data/combined_sort.txt")
 
 # Process with progress reporting every 5000 lines
 data <- process_bluetooth("data/combined_sort.txt", progress_interval = 5000)
+
+# Include only names starting with "Apple" or "Samsung"
+data <- process_bluetooth("data/combined_sort.txt", 
+                         include_prefixes = c("Apple", "Samsung"))
+
+# Exclude names starting with "Unknown"
+data <- process_bluetooth("data/combined_sort.txt", 
+                         exclude_prefixes = c("Unknown"))
 }
 
 }
