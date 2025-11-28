@@ -1,0 +1,10 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^out\.pdf$
+^.*\.png$
+^Rplot.*\.pdf$
+^derived_data$
+^data$
+^\.github$
+^README\.md$
+^LICENSE$

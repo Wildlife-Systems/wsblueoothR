@@ -87,3 +87,176 @@ test_that("datetime conversion handles correct format", {
   # Check timezone is UTC
   expect_equal(attr(result$datetime, "tzone"), "UTC")
 })
+
+test_that("process_bluetooth handles multiple files", {
+  test_file <- system.file("extdata", "test_data.txt", package = "wsbluetoothR")
+  skip_if(test_file == "", "Test data file not found")
+  
+  # Create two temporary files by splitting the test data
+  temp_dir <- tempdir()
+  file1 <- file.path(temp_dir, "test_part1.txt")
+  file2 <- file.path(temp_dir, "test_part2.txt")
+  
+  # Read test data
+  lines <- readLines(test_file)
+  mid <- ceiling(length(lines) / 2)
+  
+  # Write to two files
+  writeLines(lines[1:mid], file1)
+  writeLines(lines[(mid+1):length(lines)], file2)
+  
+  # Process single file
+  result_single <- process_bluetooth(test_file, progress_interval = 10000)
+  
+  # Process multiple files
+  result_multi <- process_bluetooth(c(file1, file2), progress_interval = 10000)
+  
+  # Results should be identical (same rows, same counts)
+  expect_equal(nrow(result_single), nrow(result_multi))
+  expect_equal(sum(result_single$count), sum(result_multi$count))
+  expect_equal(result_single$device, result_multi$device)
+  expect_equal(result_single$datetime, result_multi$datetime)
+  expect_equal(result_single$count, result_multi$count)
+  
+  # Check attributes
+  expect_true(!is.null(attr(result_multi, "total_lines")))
+  expect_true(!is.null(attr(result_multi, "device_names")))
+  
+  # Clean up
+  unlink(c(file1, file2))
+})
+
+test_that("multiple files aggregate counts correctly", {
+  test_file <- system.file("extdata", "test_data.txt", package = "wsbluetoothR")
+  skip_if(test_file == "", "Test data file not found")
+  
+  # Create two temporary files with identical content
+  temp_dir <- tempdir()
+  file1 <- file.path(temp_dir, "test_dup1.txt")
+  file2 <- file.path(temp_dir, "test_dup2.txt")
+  
+  # Copy same content to both files
+  file.copy(test_file, file1, overwrite = TRUE)
+  file.copy(test_file, file2, overwrite = TRUE)
+  
+  # Process single file
+  result_single <- process_bluetooth(test_file, progress_interval = 10000)
+  
+  # Process both duplicate files
+  result_double <- process_bluetooth(c(file1, file2), progress_interval = 10000)
+  
+  # Should have same number of rows
+  expect_equal(nrow(result_single), nrow(result_double))
+  
+  # But counts should be doubled
+  expect_equal(result_single$count * 2, result_double$count)
+  
+  # Total count should be exactly double
+  expect_equal(sum(result_single$count) * 2, sum(result_double$count))
+  
+  # Clean up
+  unlink(c(file1, file2))
+})
+
+test_that("multiple files with filtering", {
+  test_file <- system.file("extdata", "test_data.txt", package = "wsbluetoothR")
+  skip_if(test_file == "", "Test data file not found")
+  
+  # Create temporary files
+  temp_dir <- tempdir()
+  file1 <- file.path(temp_dir, "test_filter1.txt")
+  file2 <- file.path(temp_dir, "test_filter2.txt")
+  
+  # Split test data
+  lines <- readLines(test_file)
+  mid <- ceiling(length(lines) / 2)
+  writeLines(lines[1:mid], file1)
+  writeLines(lines[(mid+1):length(lines)], file2)
+  
+  # Process with filtering (empty names)
+  result_filtered <- process_bluetooth(c(file1, file2), 
+                                      progress_interval = 10000,
+                                      exclude_prefixes = c(""))
+  
+  # Should get same result as single file with same filtering
+  result_single_filtered <- process_bluetooth(test_file,
+                                             progress_interval = 10000,
+                                             exclude_prefixes = c(""))
+  
+  expect_equal(nrow(result_single_filtered), nrow(result_filtered))
+  
+  # Clean up
+  unlink(c(file1, file2))
+})
+
+test_that("multiple files error handling", {
+  test_file <- system.file("extdata", "test_data.txt", package = "wsbluetoothR")
+  skip_if(test_file == "", "Test data file not found")
+  
+  # Should error if any file doesn't exist
+  expect_error(
+    process_bluetooth(c(test_file, "nonexistent_xyz.txt")),
+    "not found"
+  )
+})
+
+test_that("metadata attributes correct for multiple files", {
+  test_file <- system.file("extdata", "test_data.txt", package = "wsbluetoothR")
+  skip_if(test_file == "", "Test data file not found")
+  
+  # Create temporary files
+  temp_dir <- tempdir()
+  file1 <- file.path(temp_dir, "test_meta1.txt")
+  file2 <- file.path(temp_dir, "test_meta2.txt")
+  
+  lines <- readLines(test_file)
+  mid <- ceiling(length(lines) / 2)
+  writeLines(lines[1:mid], file1)
+  writeLines(lines[(mid+1):length(lines)], file2)
+  
+  # Process multiple files
+  result <- process_bluetooth(c(file1, file2), progress_interval = 10000)
+  
+  # Check metadata attributes exist
+  expect_true(!is.null(attr(result, "file_name")))
+  expect_true(!is.null(attr(result, "file_size")))
+  expect_true(!is.null(attr(result, "processing_time")))
+  expect_true(!is.null(attr(result, "total_lines")))
+  expect_true(!is.null(attr(result, "lines_filtered")))
+  expect_true(!is.null(attr(result, "unique_combinations")))
+  expect_true(!is.null(attr(result, "device_names")))
+  
+  # Check file_name indicates multiple files
+  expect_match(attr(result, "file_name"), "files")
+  
+  # Check total_lines is sum of both files
+  expect_equal(attr(result, "total_lines"), length(lines))
+  
+  # Clean up
+  unlink(c(file1, file2))
+})
+
+test_that("performance benchmark", {
+  skip_on_cran()
+  test_file <- system.file("extdata", "test_data.txt", package = "wsbluetoothR")
+  skip_if(test_file == "", "Test data file not found")
+  
+  # Benchmark processing time (use high interval to minimize output overhead)
+  benchmark <- system.time(
+    result <- process_bluetooth(test_file, progress_interval = 100000)
+  )
+  
+  # Get number of lines processed
+  total_lines <- attr(result, "total_lines")
+  
+  # Calculate throughput
+  lines_per_sec <- total_lines / benchmark["elapsed"]
+  
+  # Should process at least 5,000 lines per second (conservative estimate)
+  expect_true(lines_per_sec > 5000, 
+              info = paste("Processing speed:", round(lines_per_sec), "lines/sec"))
+  
+  # Print performance info for monitoring
+  message(sprintf("Performance: %.0f lines/sec, %.3f sec total", 
+                  lines_per_sec, benchmark["elapsed"]))
+})

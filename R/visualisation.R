@@ -53,7 +53,9 @@ plot_device_timeline <- function(data, devices = NULL, aggregate = "hour") {
   n_devices <- length(unique_devices)
   colors <- rainbow(n_devices)
   
-  # Set up plot
+  # Set up plot and restore par afterwards to avoid side effects
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
   par(mar = c(5, 4, 4, 8), xpd = TRUE)
   
   # Find y-axis range
@@ -122,7 +124,9 @@ plot_prefix_distribution <- function(prefix_data, top_n = 20) {
   # Reverse order for plotting (top at top)
   prefix_data <- prefix_data[nrow(prefix_data):1, ]
   
-  # Create bar plot
+  # Create bar plot and restore par afterwards to avoid side effects
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
   par(mar = c(5, 8, 4, 2))
   barplot(prefix_data$count, names.arg = prefix_data$prefix,
           horiz = TRUE, las = 1,
@@ -187,7 +191,9 @@ plot_detection_heatmap <- function(data, time_unit = "hour") {
   # Create color palette
   colors <- colorRampPalette(c("white", "yellow", "orange", "red"))(100)
   
-  # Plot heatmap with space for legend on right
+  # Plot heatmap with space for legend on right and restore par afterwards
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
   par(mar = c(8, 8, 4, 8), xpd = TRUE)
   
   # Determine which columns to show (show every nth if too many)

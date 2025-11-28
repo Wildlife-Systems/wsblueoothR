@@ -10,20 +10,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// process_bluetooth_data
-DataFrame process_bluetooth_data(std::string input_file, int progress_interval, Nullable<CharacterVector> include_prefixes, Nullable<CharacterVector> exclude_prefixes);
-RcppExport SEXP _wsbluetoothR_process_bluetooth_data(SEXP input_fileSEXP, SEXP progress_intervalSEXP, SEXP include_prefixesSEXP, SEXP exclude_prefixesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type input_file(input_fileSEXP);
-    Rcpp::traits::input_parameter< int >::type progress_interval(progress_intervalSEXP);
-    Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type include_prefixes(include_prefixesSEXP);
-    Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type exclude_prefixes(exclude_prefixesSEXP);
-    rcpp_result_gen = Rcpp::wrap(process_bluetooth_data(input_file, progress_interval, include_prefixes, exclude_prefixes));
-    return rcpp_result_gen;
-END_RCPP
-}
 // get_unique_device_names
 CharacterVector get_unique_device_names(std::string input_file, int progress_interval);
 RcppExport SEXP _wsbluetoothR_get_unique_device_names(SEXP input_fileSEXP, SEXP progress_intervalSEXP) {
@@ -50,11 +36,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// process_bluetooth_files
+DataFrame process_bluetooth_files(CharacterVector input_files, int progress_interval, Nullable<CharacterVector> include_prefixes, Nullable<CharacterVector> exclude_prefixes);
+RcppExport SEXP _wsbluetoothR_process_bluetooth_files(SEXP input_filesSEXP, SEXP progress_intervalSEXP, SEXP include_prefixesSEXP, SEXP exclude_prefixesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< CharacterVector >::type input_files(input_filesSEXP);
+    Rcpp::traits::input_parameter< int >::type progress_interval(progress_intervalSEXP);
+    Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type include_prefixes(include_prefixesSEXP);
+    Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type exclude_prefixes(exclude_prefixesSEXP);
+    rcpp_result_gen = Rcpp::wrap(process_bluetooth_files(input_files, progress_interval, include_prefixes, exclude_prefixes));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_wsbluetoothR_process_bluetooth_data", (DL_FUNC) &_wsbluetoothR_process_bluetooth_data, 4},
     {"_wsbluetoothR_get_unique_device_names", (DL_FUNC) &_wsbluetoothR_get_unique_device_names, 2},
     {"_wsbluetoothR_find_common_prefixes_cpp", (DL_FUNC) &_wsbluetoothR_find_common_prefixes_cpp, 4},
+    {"_wsbluetoothR_process_bluetooth_files", (DL_FUNC) &_wsbluetoothR_process_bluetooth_files, 4},
     {NULL, NULL, 0}
 };
 

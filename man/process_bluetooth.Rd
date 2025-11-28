@@ -5,15 +5,17 @@
 \title{Process Bluetooth Data Using Rcpp}
 \usage{
 process_bluetooth(
-  input_file = "data/combined_sort.txt",
+  input_file,
   progress_interval = 1000,
   include_prefixes = NULL,
-  exclude_prefixes = NULL
+  exclude_prefixes = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{input_file}{Character string. Path to input data file with format:
-device datetime address power name}
+\item{input_file}{Character string or vector. Path(s) to input data file(s) with format:
+device datetime address power name. If a vector is provided, all files will be
+processed and combined into a single result.}
 
 \item{progress_interval}{Integer. Report progress every N lines (must be positive).
 Default is 1000.}
@@ -23,6 +25,9 @@ where the name field starts with one of these prefixes. Default is NULL (no filt
 
 \item{exclude_prefixes}{Character vector or NULL. If provided, exclude records
 where the name field starts with one of these prefixes. Default is NULL (no filtering).}
+
+\item{verbose}{Logical. If TRUE (default), print processing messages to console.
+Set to FALSE to suppress output.}
 }
 \value{
 A data.frame with columns:
@@ -35,11 +40,15 @@ A data.frame with columns:
 \description{
 High-performance processing of Bluetooth RSSI data files using C++ implementation.
 Counts unique device-datetime combinations from input data with optional name filtering.
+Can process single or multiple files.
 }
 \examples{
 \dontrun{
-# Process Bluetooth data file
+# Process single Bluetooth data file
 data <- process_bluetooth("data/combined_sort.txt")
+
+# Process multiple files
+data <- process_bluetooth(c("data/file1.txt", "data/file2.txt"))
 
 # Process with progress reporting every 5000 lines
 data <- process_bluetooth("data/combined_sort.txt", progress_interval = 5000)

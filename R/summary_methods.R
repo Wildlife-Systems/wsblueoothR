@@ -9,69 +9,72 @@
 #' @importFrom stats aggregate median
 #' @export
 summary.bluetooth_data <- function(object, ...) {
-  cat("\n=== Bluetooth Data Summary ===\n\n")
+  message("\n=== Bluetooth Data Summary ===\n")
   
   # File information
   if (!is.null(attr(object, "file_name"))) {
-    cat("File:", attr(object, "file_name"), "\n")
+  message("File: ", attr(object, "file_name"))
   }
   if (!is.null(attr(object, "file_size"))) {
     file_size_mb <- round(attr(object, "file_size") / 1024^2, 2)
-    cat("File size:", file_size_mb, "MB\n")
+  message("File size: ", file_size_mb, " MB")
   }
   
   # Processing statistics
   if (!is.null(attr(object, "total_lines"))) {
-    cat("\nProcessing Statistics:\n")
-    cat("  Total lines processed:", attr(object, "total_lines"), "\n")
+  message("\nProcessing Statistics:")
+  message("  Total lines processed: ", attr(object, "total_lines"))
   }
   if (!is.null(attr(object, "lines_filtered"))) {
     lines_filtered <- attr(object, "lines_filtered")
     total_lines <- attr(object, "total_lines")
     if (!is.null(total_lines) && total_lines > 0) {
       pct_filtered <- round(100 * lines_filtered / total_lines, 2)
-      cat("  Lines filtered out:", lines_filtered, 
-          paste0("(", pct_filtered, "%)"), "\n")
+      message("  Lines filtered out: ", lines_filtered, 
+              paste0("(", pct_filtered, "%)"))
     } else {
-      cat("  Lines filtered out:", lines_filtered, "\n")
+      message("  Lines filtered out: ", lines_filtered)
     }
   }
   if (!is.null(attr(object, "unique_combinations"))) {
-    cat("  Unique device-datetime combinations:", attr(object, "unique_combinations"), "\n")
+  message("  Unique device-datetime combinations: ", attr(object, "unique_combinations"))
+  }
+  if (!is.null(attr(object, "device_names"))) {
+  message("  Unique device names: ", length(attr(object, "device_names")))
   }
   if (!is.null(attr(object, "processing_time"))) {
-    cat("  Processing time:", round(attr(object, "processing_time"), 2), "seconds\n")
+  message("  Processing time: ", round(attr(object, "processing_time"), 2), " seconds")
   }
   
   # Data summary
-  cat("\nData Summary:\n")
-  cat("  Number of rows:", nrow(object), "\n")
+  message("\nData Summary:")
+  message("  Number of rows: ", nrow(object))
   
   # Device summary
   devices <- unique(object$device)
-  cat("  Unique devices:", length(devices), "\n")
+  message("  Unique devices: ", length(devices))
   if (length(devices) <= 10) {
-    cat("    Devices:", paste(devices, collapse = ", "), "\n")
+    message("    Devices: ", paste(devices, collapse = ", "))
   }
   
   # Time range
   if ("datetime" %in% names(object) && nrow(object) > 0) {
     time_range <- range(object$datetime, na.rm = TRUE)
-    cat("  Time range:", format(time_range[1]), "to", format(time_range[2]), "\n")
+    message("  Time range: ", format(time_range[1]), " to ", format(time_range[2]))
     duration <- difftime(time_range[2], time_range[1], units = "days")
-    cat("  Duration:", round(as.numeric(duration), 2), "days\n")
+    message("  Duration: ", round(as.numeric(duration), 2), " days")
   }
   
   # Detection summary
   if ("count" %in% names(object)) {
-    cat("\nDetection Counts:\n")
-    cat("  Total detections:", sum(object$count), "\n")
-    cat("  Mean detections per combination:", round(mean(object$count), 2), "\n")
-    cat("  Median detections:", median(object$count), "\n")
-    cat("  Range:", min(object$count), "-", max(object$count), "\n")
+    message("\nDetection Counts:")
+    message("  Total detections: ", sum(object$count))
+    message("  Mean detections per combination: ", round(mean(object$count), 2))
+    message("  Median detections: ", median(object$count))
+    message("  Range: ", min(object$count), " - ", max(object$count))
   }
   
-  cat("\n")
+  message("")
   invisible(object)
 }
 
@@ -82,10 +85,10 @@ summary.bluetooth_data <- function(object, ...) {
 #'
 #' @export
 print.bluetooth_data <- function(x, ...) {
-  cat("Bluetooth Data:", nrow(x), "rows\n")
+  message("Bluetooth Data: ", nrow(x), " rows")
   if (!is.null(attr(x, "file_name"))) {
-    cat("Source:", attr(x, "file_name"), "\n")
+    message("Source: ", attr(x, "file_name"))
   }
-  cat("\n")
+  message("")
   NextMethod("print")
 }

@@ -2,35 +2,44 @@
 % Please edit documentation in R/get_device_names.R
 \name{get_device_names}
 \alias{get_device_names}
-\title{Get Unique Device Names from Bluetooth Data File}
+\title{Get Unique Device Names from Bluetooth Data File or Result}
 \usage{
-get_device_names(input_file, progress_interval = 10000)
+get_device_names(input, progress_interval = 10000, verbose = TRUE)
 }
 \arguments{
-\item{input_file}{Character string. Path to input data file with format:
-device datetime address power name}
+\item{input}{Character string or bluetooth_data object. Either:
+\itemize{
+\item Path to input data file with format: device datetime address power name
+\item Result object from process_bluetooth()
+}}
 
 \item{progress_interval}{Integer. Report progress every N lines (must be positive).
-Default is 10000.}
+Default is 10000. Only used when reading from a file.}
+
+\item{verbose}{Logical. If TRUE (default), print processing messages to console.
+Set to FALSE to suppress output.}
 }
 \value{
-A character vector of unique device names found in the file, sorted alphabetically.
+A character vector of unique device names found in the data, sorted alphabetically.
 Empty names are included as empty strings.
 }
 \description{
-Scans a Bluetooth data file and returns a sorted vector of unique device names.
-This is useful for determining what device name prefixes to use for filtering.
+Extracts unique device names either from a Bluetooth data file or from
+the result of process_bluetooth(). When called after process_bluetooth(),
+it uses the device names that were already collected during processing,
+avoiding a second pass through the file.
 }
 \examples{
 \dontrun{
-# Get all unique device names
+# Method 1: Get names directly from file (requires reading entire file)
 names <- get_device_names("data/combined_sort.txt")
+
+# Method 2: Get names from process_bluetooth result (no extra file read)
+data <- process_bluetooth("data/combined_sort.txt")
+names <- get_device_names(data)
 
 # See what names are present
 head(names)
-
-# Get names with less frequent progress updates
-names <- get_device_names("data/combined_sort.txt", progress_interval = 50000)
 }
 
 }
