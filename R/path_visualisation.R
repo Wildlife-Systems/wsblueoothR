@@ -1,3 +1,82 @@
+#' Rename Devices in Address Paths
+#'
+#' Replaces device identifiers in path strings with custom names.
+#' Useful for converting numeric device IDs to meaningful location names.
+#'
+#' @param path_data A data.frame from \code{get_address_paths()} containing path information.
+#' @param device_names A named list or vector where names are old device IDs and values are new names.
+#'   Example: \code{c("14" = "Entrance", "18" = "Main Hall", "21" = "Exit")}
+#'
+#' @return A data.frame with the same structure as \code{path_data} but with renamed devices in the path column.
+#'
+#' @details
+#' The function processes all columns that might contain device identifiers:
+#' \itemize{
+#'   \item \code{path}: The main path string (e.g., "14 -> 18 -> 21")
+#'   \item \code{first_device}: Starting device
+#'   \item \code{last_device}: Ending device
+#'   \item Device-specific columns if present
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' # Get address paths
+#' paths <- get_address_paths(files, top_n = 50)
+#'
+#' # Define device names
+#' names <- c("14" = "Entrance", "18" = "Main Hall", "21" = "Gallery", "16" = "Exit")
+#'
+#' # Rename devices
+#' paths_named <- rename_path_devices(paths, names)
+#'
+#' # Now paths show: "Entrance -> Main Hall -> Gallery"
+#' plot_address_paths_sankey(paths_named)
+#' }
+#' @export
+rename_path_devices <- function(path_data, device_names) {
+  # Validate input
+  if (!is.data.frame(path_data)) {
+    stop("path_data must be a data.frame")
+  }
+  
+  if (is.null(names(device_names)) || any(names(device_names) == "")) {
+    stop("device_names must be a named list or vector")
+  }
+  
+  # Make a copy to avoid modifying original
+  result <- path_data
+  
+  # Replace in path column if it exists
+  if ("path" %in% names(result)) {
+    for (old_name in names(device_names)) {
+      new_name <- device_names[[old_name]]
+      # Replace whole words only (surrounded by spaces, arrows, or string boundaries)
+      pattern <- paste0("(^| -> )", old_name, "( -> |$)")
+      replacement <- paste0("\\1", new_name, "\\2")
+      result$path <- gsub(pattern, replacement, result$path)
+    }
+  }
+  
+  # Replace in first_device column if it exists
+  if ("first_device" %in% names(result)) {
+    for (old_name in names(device_names)) {
+      new_name <- device_names[[old_name]]
+      result$first_device[result$first_device == old_name] <- new_name
+    }
+  }
+  
+  # Replace in last_device column if it exists
+  if ("last_device" %in% names(result)) {
+    for (old_name in names(device_names)) {
+      new_name <- device_names[[old_name]]
+      result$last_device[result$last_device == old_name] <- new_name
+    }
+  }
+  
+  return(result)
+}
+
+
 #' Visualize Address Paths as Sankey Diagram
 #'
 #' Creates an interactive Sankey diagram showing the flow of addresses through devices.
