@@ -4,15 +4,15 @@
 \alias{plot_detection_heatmap}
 \title{Plot Detection Heatmap}
 \usage{
-plot_detection_heatmap(data, time_unit = "hour")
+plot_detection_heatmap(data, time_unit = "month")
 }
 \arguments{
 \item{data}{A bluetooth_data object or data.frame from \code{process_bluetooth()}.}
 
-\item{time_unit}{Character. Time aggregation: "hour", "day", or "week". Default is "hour".}
+\item{time_unit}{Character. Time aggregation: "hour", "day", "week", or "month". Default is "month".}
 }
 \value{
-A base R heatmap showing device × time detection patterns.
+A base R heatmap showing device x time detection patterns.
 }
 \description{
 Creates a heatmap showing detection patterns across devices and time periods.

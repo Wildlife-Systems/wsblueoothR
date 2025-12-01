@@ -141,9 +141,9 @@ plot_prefix_distribution <- function(prefix_data, top_n = 20) {
 #' Creates a heatmap showing detection patterns across devices and time periods.
 #'
 #' @param data A bluetooth_data object or data.frame from \code{process_bluetooth()}.
-#' @param time_unit Character. Time aggregation: "hour", "day", or "week". Default is "hour".
+#' @param time_unit Character. Time aggregation: "hour", "day", "week", or "month". Default is "month".
 #'
-#' @return A base R heatmap showing device × time detection patterns.
+#' @return A base R heatmap showing device x time detection patterns.
 #'
 #' @examples
 #' \dontrun{
@@ -152,7 +152,7 @@ plot_prefix_distribution <- function(prefix_data, top_n = 20) {
 #' }
 #' @importFrom grDevices colorRampPalette
 #' @export
-plot_detection_heatmap <- function(data, time_unit = "hour") {
+plot_detection_heatmap <- function(data, time_unit = "month") {
   
   # Validate input
   if (!inherits(data, "data.frame")) {
@@ -168,7 +168,8 @@ plot_detection_heatmap <- function(data, time_unit = "hour") {
     "hour" = format(data$datetime, "%Y-%m-%d %H:00"),
     "day" = format(data$datetime, "%Y-%m-%d"),
     "week" = format(as.Date(cut(data$datetime, "week")), "%Y-%m-%d"),
-    stop("time_unit must be one of: hour, day, week")
+    "month" = format(data$datetime, "%Y-%m"),
+    stop("time_unit must be one of: hour, day, week, month")
   )
   
   # Aggregate
@@ -207,7 +208,7 @@ plot_detection_heatmap <- function(data, time_unit = "hour") {
   image(1:ncol(mat), 1:nrow(mat), t(mat),
         col = colors,
         xlab = "", ylab = "",
-        main = paste("Detection Heatmap by", time_unit),
+        main = paste("Detection Heatmap by", time_unit, "(n =",format(sum(data$count), big.mark=","),")"),
         axes = FALSE)
   
   # Add axes
@@ -231,4 +232,111 @@ plot_detection_heatmap <- function(data, time_unit = "hour") {
          cex = 0.7)
   
   par(mar = c(5, 4, 4, 2) + 0.1, xpd = FALSE)
+}
+
+#' Plot Normalized Detection Heatmap
+#'
+#' Creates a heatmap showing detection patterns where counts for each device
+#' are normalized to that device's maximum, revealing relative activity patterns.
+#'
+#' @param data A bluetooth_data object or data.frame from \code{process_bluetooth()}.
+#' @param time_unit Character. Time aggregation: "hour", "day", "week", or "month". Default is "month".
+#'
+#' @return A base R heatmap showing normalized device x time detection patterns.
+#'
+#' @examples
+#' \dontrun{
+#' data <- process_bluetooth("data/combined_sort.txt")
+#' plot_detection_heatmap_normalized(data, time_unit = "day")
+#' }
+#' @importFrom grDevices colorRampPalette
+#' @export
+plot_detection_heatmap_normalized <- function(data, time_unit = "month") {
+  
+  # Validate input
+  if (!inherits(data, "data.frame")) {
+    stop("data must be a data.frame or bluetooth_data object")
+  }
+  
+  if (!all(c("device", "datetime", "count") %in% names(data))) {
+    stop("data must have columns: device, datetime, count")
+  }
+  
+  # Create time bins
+  data$time_bin <- switch(time_unit,
+    "hour" = format(data$datetime, "%Y-%m-%d %H:00"),
+    "day" = format(data$datetime, "%Y-%m-%d"),
+    "week" = format(as.Date(cut(data$datetime, "week")), "%Y-%m-%d"),
+    "month" = format(data$datetime, "%Y-%m"),
+    stop("time_unit must be one of: hour, day, week, month")
+  )
+  
+  # Aggregate
+  agg_data <- aggregate(count ~ device + time_bin, data = data, FUN = sum)
+  
+  # Create matrix for heatmap
+  devices <- sort(unique(agg_data$device))
+  time_bins <- sort(unique(agg_data$time_bin))
+  
+  mat <- matrix(0, nrow = length(devices), ncol = length(time_bins))
+  rownames(mat) <- devices
+  colnames(mat) <- time_bins
+  
+  for (i in 1:nrow(agg_data)) {
+    row_idx <- match(agg_data$device[i], devices)
+    col_idx <- match(agg_data$time_bin[i], time_bins)
+    mat[row_idx, col_idx] <- agg_data$count[i]
+  }
+  
+  # Normalize each row (device) to its maximum
+  mat_normalized <- t(apply(mat, 1, function(row) {
+    max_val <- max(row)
+    if (max_val > 0) {
+      row / max_val
+    } else {
+      row
+    }
+  }))
+  
+  # Create color palette
+  colors <- colorRampPalette(c("white", "yellow", "orange", "red"))(100)
+  
+  # Plot heatmap with space for legend on right and restore par afterwards
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
+  par(mar = c(8, 8, 4, 8), xpd = TRUE)
+  
+  # Determine which columns to show (show every nth if too many)
+  n_cols <- ncol(mat_normalized)
+  show_labels <- if (n_cols <= 24) {
+    TRUE
+  } else {
+    seq(1, n_cols, by = ceiling(n_cols / 24))
+  }
+  
+  image(1:ncol(mat_normalized), 1:nrow(mat_normalized), t(mat_normalized),
+        col = colors,
+        xlab = "", ylab = "",
+        main = paste("Normalized Detection Heatmap by", time_unit),
+        axes = FALSE)
+  
+  # Add axes
+  axis(2, at = 1:nrow(mat_normalized), labels = rownames(mat_normalized), las = 1, cex.axis = 0.8)
+  
+  if (is.logical(show_labels)) {
+    axis(1, at = 1:ncol(mat_normalized), labels = colnames(mat_normalized), las = 2, cex.axis = 0.6)
+  } else {
+    axis(1, at = show_labels, labels = colnames(mat_normalized)[show_labels], las = 2, cex.axis = 0.6)
+  }
+  
+  # Add color scale legend to the right of plot (0 to 1)
+  legend_vals <- seq(0, 1, by = 0.25)
+  legend(x = ncol(mat_normalized) + 1, y = nrow(mat_normalized) / 2,
+         legend = paste0(legend_vals * 100, "%"),
+         fill = colorRampPalette(c("white", "yellow", "orange", "red"))(length(legend_vals)),
+         title = "Relative\nActivity",
+         bty = "n",
+         xjust = 0,
+         yjust = 0.5,
+         cex = 0.7)
 }
