@@ -36,8 +36,7 @@ test_that("get_address_duration works with synthetic data", {
   # Check structure
   expect_s3_class(result, "data.frame")
   expect_true(all(c("device", "date", "address", "first_seen", "last_seen", 
-                    "duration_seconds", "detection_count", "duration_minutes", 
-                    "duration_hours") %in% names(result)))
+                    "duration_seconds", "detection_count") %in% names(result)))
   
   # Check number of records (4 unique device-date-address combinations)
   expect_equal(nrow(result), 4)
@@ -48,8 +47,6 @@ test_that("get_address_duration works with synthetic data", {
                  result$address == "AA:BB:CC:DD:EE:01", ]
   expect_equal(nrow(row1), 1)
   expect_equal(row1$duration_seconds, 1800)  # 30 minutes
-  expect_equal(row1$duration_minutes, 30)
-  expect_equal(row1$duration_hours, 0.5)
   expect_equal(row1$detection_count, 5)
   expect_equal(row1$first_seen, "20250815-100000")
   expect_equal(row1$last_seen, "20250815-103000")
@@ -68,7 +65,6 @@ test_that("get_address_duration works with synthetic data", {
                  result$address == "AA:BB:CC:DD:EE:01", ]
   expect_equal(nrow(row3), 1)
   expect_equal(row3$duration_seconds, 3600)  # 60 minutes
-  expect_equal(row3$duration_hours, 1)
   expect_equal(row3$detection_count, 3)
   
   # Check Device 16, 2025-08-16, AA:BB:CC:DD:EE:01
@@ -77,7 +73,6 @@ test_that("get_address_duration works with synthetic data", {
                  result$address == "AA:BB:CC:DD:EE:01", ]
   expect_equal(nrow(row4), 1)
   expect_equal(row4$duration_seconds, 300)  # 5 minutes
-  expect_equal(row4$duration_minutes, 5)
   expect_equal(row4$detection_count, 2)
   
   # Clean up
@@ -100,8 +95,6 @@ test_that("get_address_duration handles single detection correctly", {
   
   expect_equal(nrow(result), 1)
   expect_equal(result$duration_seconds, 0)
-  expect_equal(result$duration_minutes, 0)
-  expect_equal(result$duration_hours, 0)
   expect_equal(result$detection_count, 1)
   expect_equal(result$first_seen, result$last_seen)
   
@@ -320,7 +313,6 @@ test_that("get_address_duration handles large duration values", {
   
   expect_equal(nrow(result), 1)
   expect_equal(result$duration_seconds, 43200)  # 12 hours
-  expect_equal(result$duration_hours, 12)
   expect_equal(result$detection_count, 2)
   
   # Clean up
